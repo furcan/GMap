@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 
-import { mapInitAsync, mapGetDistanceAsKM, mapClearAllMarkers } from 'gmap/GMap';
+import { mapInitAsync, mapGetDistanceAsMeters, mapClearAllMarkers } from 'gmap/GMap';
 
 import './App.scss';
 
@@ -12,7 +12,7 @@ interface IAppStatePosition {
 function App(): React.ReactElement {
   // App State: begin
   const [appStatePosition, setAppStatePosition] = useState<IAppStatePosition>({ latitude: 0, longitude: 0 });
-  const [appStateDistanceAsKM, setAppStateDistanceAsKM] = useState<number>(0);
+  const [appStateDistanceAsMeters, setAppStateDistanceAsMeters] = useState<number>(0);
   const [appStateShowDistance, setAppStateShowDistance] = useState<boolean>(false);
   // App State: end
 
@@ -25,21 +25,21 @@ function App(): React.ReactElement {
     const { map, mapInitMarker } = await mapInitAsync({ mapApiKey, mapElementId, mapCreateInitMarker });
 
     map.addListener('idle', () => {
-      const km = mapGetDistanceAsKM(map);
-      setAppStateDistanceAsKM(km);
+      const meters = mapGetDistanceAsMeters(map);
+      setAppStateDistanceAsMeters(meters);
     });
 
     map.addListener('center_changed', () => {
       const centerLat = map.getCenter().lat();
       const centerLong = map.getCenter().lng();
-      const km = mapGetDistanceAsKM(map);
+      const meters = mapGetDistanceAsMeters(map);
 
       mapInitMarker?.setPosition({
         lat: centerLat,
         lng: centerLong,
       });
 
-      setAppStateDistanceAsKM(km);
+      setAppStateDistanceAsMeters(meters);
       setAppStatePosition({
         latitude: centerLat,
         longitude: centerLong,
@@ -81,8 +81,8 @@ function App(): React.ReactElement {
           onTouchStart={() => setAppStateShowDistance(true)}
           onTouchEnd={() => setAppStateShowDistance(false)}
         >
-          <span className="app__info__key">Map Height Distance (Kilometer):</span>
-          <span className="app__info__value">{appStateDistanceAsKM}</span>
+          <span className="app__info__key">Map Height Distance (Meters):</span>
+          <span className="app__info__value">{appStateDistanceAsMeters}</span>
           <span className="app__info__highlight">{'?'}</span>
         </p>
       </div>

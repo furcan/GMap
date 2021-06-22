@@ -43,17 +43,17 @@ const markers: TGMapMarkers = [];
 // Map: Markers: end
 
 // Map: Distance Calculator: begin
-const calcDistanceAsKM = (p1Lat: number, p1Long: number, p2Lat: number, p2Long: number) => {
+const calcDistanceAsMeters = (p1Lat: number, p1Long: number, p2Lat: number, p2Long: number) => {
   const radiusOfTheEarth = 3958.8; // Radius of the Earth in miles
   const radiansLat1 = p1Lat * (Math.PI / 180); // Convert degrees to radians
   const radiansLat2 = p2Lat * (Math.PI / 180); // Convert degrees to radians
   const radianDiffLat = radiansLat2 - radiansLat1; // Radian difference (latitudes)
   const radianDiffLong = (p2Long - p1Long) * (Math.PI / 180); // Radian difference (longitudes)
   const distanceAsMile = 2 * radiusOfTheEarth * Math.asin(Math.sqrt(Math.sin(radianDiffLat / 2) * Math.sin(radianDiffLat / 2) + Math.cos(radiansLat1) * Math.cos(radiansLat2) * Math.sin(radianDiffLong / 2) * Math.sin(radianDiffLong / 2)));
-  return Math.round(distanceAsMile * 1.609344 * 1000); // as km
+  return Math.round(distanceAsMile * 1.609344 * 1000); // convert to km and convert to meters
 };
 
-const mapGetDistanceAsKM = (map: TGMapElement): number => {
+const mapGetDistanceAsMeters = (map: TGMapElement): number => {
   const bounds = map.getBounds();
   if (bounds) {
     const boundNorthEast = bounds.getNorthEast();
@@ -62,10 +62,10 @@ const mapGetDistanceAsKM = (map: TGMapElement): number => {
     const p1Long = boundSouthWest.lng();
     const p2Lat = boundSouthWest.lat();
     const p2Long = boundSouthWest.lng();
-    const distanceAsKM = calcDistanceAsKM(p1Lat, p1Long, p2Lat, p2Long);
-    return distanceAsKM;
+    const distanceAsMeters = calcDistanceAsMeters(p1Lat, p1Long, p2Lat, p2Long);
+    return distanceAsMeters;
   }
-  return 1000; // fallback as km
+  return 1000; // fallback, 1km - 1000m
 };
 // Map: Distance Calculator: end
 
@@ -200,7 +200,7 @@ export type {
 
 export {
   mapInitAsync,
-  mapGetDistanceAsKM,
+  mapGetDistanceAsMeters,
   mapCreateMarker,
   mapClearAllMarkers,
   mapAdjustZoom,
