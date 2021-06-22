@@ -1,5 +1,6 @@
 {
   "name": "gmap",
+  "homepage": "https://furcan.github.io/GMap/",
   "version": "0.0.1-beta.01",
   "private": true,
   "devDependencies": {
