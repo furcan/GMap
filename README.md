@@ -9,7 +9,7 @@ Google Maps for React.
 Dependencies
 
  - [@googlemaps/map-loader](https://www.npmjs.com/package/@googlemaps/map-loader)
- - TypeScript
+ 
 
 ---
 ---
