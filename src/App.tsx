@@ -23,12 +23,12 @@ function App(): React.ReactElement {
   // App State: end
 
   // GMap Init and Events: begin
-  const mapAK = 'AIzaSyA6TZYmSMAyAvrWL9Cdu0sKpGhn-1OZSvc'; // restricted
+  const mapApiKey = ''; // restricted
   const mapElementId = 'Map';
   const mapCreateInitMarker = true;
 
   const mapInitAndEvents = useCallback(async () => {
-    const { map, mapInitMarker, mapBounds } = await mapInitAsync({ mapApiKey: mapAK, mapElementId, mapCreateInitMarker });
+    const { map, mapInitMarker, mapBounds } = await mapInitAsync({ mapApiKey, mapElementId, mapCreateInitMarker });
     setStateMap({ map, mapBounds });
 
     map.addListener('idle', () => {
