@@ -58,14 +58,30 @@ const mapMarkersChunk: TGMapMarkers = [];
 // Map: Markers Chunk: end
 
 // Map: Distance Calculator: begin
-const calcDistanceAsMeters = (p1Lat: number, p1Long: number, p2Lat: number, p2Long: number) => {
+const calcDistanceAsMeters = (pos1Lat: number, pos1Long: number, pos2Lat: number, pos2Long: number) => {
   const radiusOfTheEarth = 3958.8; // Radius of the Earth in miles
-  const radiansLat1 = p1Lat * (Math.PI / 180); // Convert degrees to radians
-  const radiansLat2 = p2Lat * (Math.PI / 180); // Convert degrees to radians
+  const radiansLat1 = pos1Lat * (Math.PI / 180); // Convert degrees to radians
+  const radiansLat2 = pos2Lat * (Math.PI / 180); // Convert degrees to radians
   const radianDiffLat = radiansLat2 - radiansLat1; // Radian difference (latitudes)
-  const radianDiffLong = (p2Long - p1Long) * (Math.PI / 180); // Radian difference (longitudes)
+  const radianDiffLong = (pos2Long - pos1Long) * (Math.PI / 180); // Radian difference (longitudes)
   const distanceAsMile = 2 * radiusOfTheEarth * Math.asin(Math.sqrt(Math.sin(radianDiffLat / 2) * Math.sin(radianDiffLat / 2) + Math.cos(radiansLat1) * Math.cos(radiansLat2) * Math.sin(radianDiffLong / 2) * Math.sin(radianDiffLong / 2)));
   return Math.round(distanceAsMile * 1.609344 * 1000); // convert to km and convert to meters
+};
+
+const mapGetWidthAsMeters = (map: TGMapElement): number => {
+  const bounds = map.getBounds();
+  if (bounds) {
+    const boundNorthEast = bounds.getNorthEast();
+    const boundSouthWest = bounds.getSouthWest();
+    const mapWidthAsMeters = calcDistanceAsMeters(
+      boundSouthWest.lat(),
+      boundNorthEast.lng(),
+      boundSouthWest.lat(),
+      boundSouthWest.lng(),
+    );
+    return mapWidthAsMeters;
+  }
+  return 1000; // fallback, 1km - 1000m
 };
 
 const mapGetHeightAsMeters = (map: TGMapElement): number => {
@@ -73,12 +89,13 @@ const mapGetHeightAsMeters = (map: TGMapElement): number => {
   if (bounds) {
     const boundNorthEast = bounds.getNorthEast();
     const boundSouthWest = bounds.getSouthWest();
-    const p1Lat = boundNorthEast.lat();
-    const p1Long = boundSouthWest.lng();
-    const p2Lat = boundSouthWest.lat();
-    const p2Long = boundSouthWest.lng();
-    const distanceAsMeters = calcDistanceAsMeters(p1Lat, p1Long, p2Lat, p2Long);
-    return distanceAsMeters;
+    const mapHeightAsMeters = calcDistanceAsMeters(
+      boundNorthEast.lat(),
+      boundSouthWest.lng(),
+      boundSouthWest.lat(),
+      boundSouthWest.lng(),
+    );
+    return mapHeightAsMeters;
   }
   return 1000; // fallback, 1km - 1000m
 };
@@ -237,6 +254,7 @@ export type {
 export {
   mapInitAsync,
   mapAutoZoomByBounds,
+  mapGetWidthAsMeters,
   mapGetHeightAsMeters,
   mapCreateMarker,
   mapRemoveAllMarkers,

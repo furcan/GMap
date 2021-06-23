@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback, useState } from 'react';
 
-import { mapInitAsync, mapGetHeightAsMeters, mapCreateMarker, mapRecreateMarkers, mapRemoveAllMarkers, TGMapElement, TGMapMarkers, TGMapLatLngBounds } from 'gmap/GMap';
+import { mapInitAsync, mapGetWidthAsMeters, mapGetHeightAsMeters, mapCreateMarker, mapRecreateMarkers, mapRemoveAllMarkers, TGMapElement, TGMapMarkers, TGMapLatLngBounds } from 'gmap/GMap';
 
 import './App.scss';
 
@@ -14,11 +14,17 @@ interface IStateMapPosition {
   longitude: number;
 }
 
+interface IStateMapDistances {
+  mapWidth: number;
+  mapHeight: number;
+}
+
 function App(): React.ReactElement {
   // App State: begin
   const [stateMap, setStateMap] = useState<IStateMap | null>(null);
   const [stateMapPosition, setStateMapPosition] = useState<IStateMapPosition>({ latitude: 0, longitude: 0 });
-  const [stateMapHeightAsMeters, setStateMapHeightAsMeters] = useState<number>(0);
+  const [stateMapDistancesAsMeters, setStateMapDistancesAsMeters] = useState<IStateMapDistances>({ mapWidth: 0, mapHeight: 0 });
+  const [stateMapWidthShow, setStateMapWidthShow] = useState<boolean>(false);
   const [stateMapHeightShow, setStateMapHeightShow] = useState<boolean>(false);
   // App State: end
 
@@ -32,21 +38,29 @@ function App(): React.ReactElement {
     setStateMap({ map, mapBounds });
 
     map.addListener('idle', () => {
-      const meters = mapGetHeightAsMeters(map);
-      setStateMapHeightAsMeters(meters);
+      const mapWidth = mapGetWidthAsMeters(map);
+      const mapHeight = mapGetHeightAsMeters(map);
+      setStateMapDistancesAsMeters({
+        mapWidth,
+        mapHeight,
+      });
     });
 
     map.addListener('center_changed', () => {
       const centerLat = map.getCenter().lat();
       const centerLong = map.getCenter().lng();
-      const meters = mapGetHeightAsMeters(map);
+      const mapWidth = mapGetWidthAsMeters(map);
+      const mapHeight = mapGetHeightAsMeters(map);
 
       mapInitMarker?.setPosition({
         lat: centerLat,
         lng: centerLong,
       });
 
-      setStateMapHeightAsMeters(meters);
+      setStateMapDistancesAsMeters({
+        mapWidth,
+        mapHeight,
+      });
       setStateMapPosition({
         latitude: centerLat,
         longitude: centerLong,
@@ -135,17 +149,29 @@ function App(): React.ReactElement {
         </p>
         <p
           className="app__info__text"
+          onMouseEnter={() => setStateMapWidthShow(true)}
+          onMouseLeave={() => setStateMapWidthShow(false)}
+          onTouchStart={() => setStateMapWidthShow(true)}
+          onTouchEnd={() => setStateMapWidthShow(false)}
+        >
+          <span className="app__info__key">Map Width (Meters):</span>
+          <span className="app__info__value">{stateMapDistancesAsMeters.mapWidth}</span>
+          <span className="app__info__highlight">{'?'}</span>
+        </p>
+        <p
+          className="app__info__text"
           onMouseEnter={() => setStateMapHeightShow(true)}
           onMouseLeave={() => setStateMapHeightShow(false)}
           onTouchStart={() => setStateMapHeightShow(true)}
           onTouchEnd={() => setStateMapHeightShow(false)}
         >
           <span className="app__info__key">Map Height (Meters):</span>
-          <span className="app__info__value">{stateMapHeightAsMeters}</span>
+          <span className="app__info__value">{stateMapDistancesAsMeters.mapHeight}</span>
           <span className="app__info__highlight">{'?'}</span>
         </p>
       </div>
-      <div className={`app__distance ${stateMapHeightShow ? 'state--active' : ''}`}></div>
+      <div className={`app__distance distance--width ${stateMapWidthShow ? 'state--active' : ''}`}></div>
+      <div className={`app__distance distance--height ${stateMapHeightShow ? 'state--active' : ''}`}></div>
     </div>
   );
 }

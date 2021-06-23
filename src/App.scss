@@ -133,9 +133,9 @@ p {
     background: $color-white;
     border-radius: 2rem;
     border: none;
-    font-size: 1rem;
+    font-size: 0.8rem;
     font-weight: 500;
-    margin: 0.25rem 1rem;
+    margin: 0.5rem 0.75rem;
 
     &:active {
       transform: scale(0.975);
@@ -195,9 +195,9 @@ p {
     position: fixed;
     z-index: 4;
     left: auto;
-    top: 0;
+    top: auto;
     right: auto;
-    bottom: 0;
+    bottom: auto;
     margin: auto;
     width: 100vh;
     height: 100vh;
@@ -207,6 +207,13 @@ p {
     transition: opacity 0.25s ease-in-out, visibility 0.25s ease-in-out;
     opacity: 0;
     visibility: hidden;
+
+    &.distance--width {
+      width: 100vw;
+      height: 100vw;
+      background: rgba($color-google-yellow, 0.3);
+      border-color: $color-google-yellow;
+    }
 
     &.state--active {
       opacity: 1;
