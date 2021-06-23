@@ -10,7 +10,7 @@ type TGMapLibraries = ('drawing' | 'geometry' | 'localContext' | 'places' | 'vis
 type TGMapOptions = google.maps.MapOptions;
 type TGMapApiOptions = MapsJSAPIOptions;
 
-interface IMapLoaderOptions {
+interface IGMapLoaderOptions {
   apiKey: string;
   divId: string;
   append?: boolean;
@@ -18,7 +18,7 @@ interface IMapLoaderOptions {
   apiOptions?: TGMapApiOptions;
 }
 
-interface IMapInitAsync {
+interface IGMapInitAsync {
   mapApiKey: string;
   mapElementId: string;
   mapCreateInitMarker: boolean;
@@ -26,10 +26,25 @@ interface IMapInitAsync {
   apiOptions?: TGMapApiOptions;
 }
 
-interface IMapReturnData {
+interface IGMapReturnData {
   map: TGMapElement,
-  mapZoomBounds: TGMapLatLngBounds;
+  mapBounds: TGMapLatLngBounds;
   mapInitMarker?: TGMapMarker,
+}
+
+interface IGMapAutoZoomByBounds {
+  map: TGMapElement;
+  markerLat: number;
+  markerLong: number;
+  mapBounds?: TGMapLatLngBounds;
+}
+
+interface IGMapRecreateMarkers {
+  map: TGMapElement;
+  newMarkers: TGMapMarkers,
+  clearExistingMarkers: boolean;
+  autoFitBounds?: boolean;
+  mapBounds?: TGMapLatLngBounds;
 }
 // Map: Types and Interfaces: end
 
@@ -38,9 +53,9 @@ const mapInitLat = 39.925018;
 const mapInitLong = 32.836956;
 // Map: Init Variables: end
 
-// Map: Markers: begin
-const markers: TGMapMarkers = [];
-// Map: Markers: end
+// Map: Markers Chunk: begin
+const mapMarkersChunk: TGMapMarkers = [];
+// Map: Markers Chunk: end
 
 // Map: Distance Calculator: begin
 const calcDistanceAsMeters = (p1Lat: number, p1Long: number, p2Lat: number, p2Long: number) => {
@@ -53,7 +68,7 @@ const calcDistanceAsMeters = (p1Lat: number, p1Long: number, p2Lat: number, p2Lo
   return Math.round(distanceAsMile * 1.609344 * 1000); // convert to km and convert to meters
 };
 
-const mapGetDistanceAsMeters = (map: TGMapElement): number => {
+const mapGetHeightAsMeters = (map: TGMapElement): number => {
   const bounds = map.getBounds();
   if (bounds) {
     const boundNorthEast = bounds.getNorthEast();
@@ -95,32 +110,47 @@ const mapCreateMarker = (markerOptions: TGMapMarkerOptions): TGMapMarker => {
   };
 
   const marker = new google.maps.Marker({ ...defaultOptions, ...markerOptions });
-  markers.push(marker);
+  mapMarkersChunk.push(marker);
 
   return marker;
 };
 // Map: Create New Marker: end
 
-// Map: Clear All Markers: begin
-const mapClearAllMarkers = (): void => {
-  markers.forEach((marker) => {
+// Map: Remove All Markers: begin
+const mapRemoveAllMarkers = (): void => {
+  mapMarkersChunk.map(marker => {
     marker.setMap(null);
   });
+  mapMarkersChunk.splice(0, mapMarkersChunk.length);
 };
-// Map: Clear All Markers: end
+// Map: Remove All Markers: end
 
-// Map: Adjust Zoom: begin
-const mapAdjustZoom = (map: TGMapElement, markerLat: number, markerLong: number, adjustZoomBounds?: TGMapLatLngBounds): void => {
-  if (!adjustZoomBounds) {
-    adjustZoomBounds = new google.maps.LatLngBounds();
+// Map: Auto Zoom by Bounds: begin
+const mapAutoZoomByBounds = ({ map, markerLat, markerLong, mapBounds }: IGMapAutoZoomByBounds): void => {
+  if (!mapBounds) {
+    mapBounds = new google.maps.LatLngBounds();
   }
-  adjustZoomBounds.extend(new google.maps.LatLng(markerLat, markerLong));
-  map.fitBounds(adjustZoomBounds);
+  mapBounds.extend(new google.maps.LatLng(markerLat, markerLong));
+  map.fitBounds(mapBounds);
 };
-// Map: Adjust Zoom: end
+// Map: Auto Zoom by Bounds: end
+
+// Map: Recreate Markers: begin
+const mapRecreateMarkers = ({ map, newMarkers, clearExistingMarkers, autoFitBounds, mapBounds }: IGMapRecreateMarkers): void => {
+  if (clearExistingMarkers) {
+    mapRemoveAllMarkers();
+  }
+  mapMarkersChunk.push(...newMarkers);
+  newMarkers.map(x => x.setMap(map));
+  if (autoFitBounds && mapBounds) {
+    map.fitBounds(mapBounds);
+  }
+};
+// Map: Recreate Markers: end
+
 
 // Map: Init: begin
-const mapInitAsync = async ({ mapApiKey, mapElementId, mapCreateInitMarker, mapOptions, apiOptions }: IMapInitAsync): Promise<IMapReturnData> => {
+const mapInitAsync = async ({ mapApiKey, mapElementId, mapCreateInitMarker, mapOptions, apiOptions }: IGMapInitAsync): Promise<IGMapReturnData> => {
   const mapInitOptions: TGMapOptions = {
     center: {
       lat: mapInitLat,
@@ -152,7 +182,7 @@ const mapInitAsync = async ({ mapApiKey, mapElementId, mapCreateInitMarker, mapO
     libraries: mapApiInitLibraries,
   };
 
-  const mapLoaderOptions: IMapLoaderOptions = {
+  const mapLoaderOptions: IGMapLoaderOptions = {
     apiKey: mapApiKey,
     divId: mapElementId,
     append: false, // true => creates a new div element and append it to the "divId" element.
@@ -160,26 +190,30 @@ const mapInitAsync = async ({ mapApiKey, mapElementId, mapCreateInitMarker, mapO
     apiOptions: { ...mapApiInitOptions, ...apiOptions },
   };
 
-  const mapLoader = new GoogleMap();
+  const map: TGMapElement = await new GoogleMap().initMap(mapLoaderOptions);
 
-  const map: TGMapElement = await mapLoader.initMap(mapLoaderOptions);
-
-  const mapZoomBounds = new google.maps.LatLngBounds();
+  const mapBounds = new google.maps.LatLngBounds();
 
   if (mapCreateInitMarker) {
     const mapInitMarker = mapCreateMarker({ map: map });
-    mapAdjustZoom(map, mapInitLat, mapInitLong, mapZoomBounds);
+
+    mapAutoZoomByBounds({
+      map,
+      markerLat: mapInitLat,
+      markerLong: mapInitLong,
+      mapBounds,
+    });
 
     return {
       map,
-      mapZoomBounds,
+      mapBounds,
       mapInitMarker,
     };
   }
 
   return {
     map,
-    mapZoomBounds,
+    mapBounds,
   };
 };
 // Map: Init: end
@@ -193,15 +227,18 @@ export type {
   TGMapLibraries,
   TGMapOptions,
   TGMapApiOptions,
-  IMapLoaderOptions,
-  IMapInitAsync,
-  IMapReturnData,
+  IGMapLoaderOptions,
+  IGMapInitAsync,
+  IGMapReturnData,
+  IGMapAutoZoomByBounds,
+  IGMapRecreateMarkers,
 };
 
 export {
   mapInitAsync,
-  mapGetDistanceAsMeters,
+  mapAutoZoomByBounds,
+  mapGetHeightAsMeters,
   mapCreateMarker,
-  mapClearAllMarkers,
-  mapAdjustZoom,
+  mapRemoveAllMarkers,
+  mapRecreateMarkers,
 };

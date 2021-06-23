@@ -23,13 +23,8 @@ $color-google-red: #ea4335;
 }
 
 ::-webkit-scrollbar {
-  width: 0.25rem;
-  height: 0.25rem;
-
-  @media (min-width: 768px) {
-    width: 0.5rem;
-    height: 0.5rem;
-  }
+  width: 0.5rem;
+  height: 0.5rem;
 }
 
 ::-webkit-scrollbar-track {
@@ -140,6 +135,7 @@ p {
     border: none;
     font-size: 1rem;
     font-weight: 500;
+    margin: 0.25rem 1rem;
 
     &:active {
       transform: scale(0.975);
@@ -154,7 +150,7 @@ p {
     bottom: 0;
     margin: auto;
     width: 100%;
-    max-width: 20rem;
+    max-width: 22.5rem;
     padding: 1.25rem;
     color: $color-dark;
     background: $color-white;
